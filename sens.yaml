@@ -1,0 +1,5 @@
+name: BMP280 sensor
+entrypoint: sens.toit
+triggers:
+  on_install: true
+  on_interval: 15s
