@@ -1,52 +1,53 @@
-// import libraries for HTTPS
+// Import libraries for HTTPS.
 import net
 import net.x509 as net
 import http
 import tls
 
-// import libraries for BMP280 sensor
+// Import libraries for BMP280 sensor
 import gpio
 import i2c
 import .bmp280 as drivers
 
-network_interface := net.open
+TEMP_THRESHOLD ::= 30 // Temperature threshold in degrees.
+EMAIL  ::= "< Your e-mail address >"  // Email address for sending alerts.
+APP_ID ::= "< Your Web app Deployment ID >"  // Webapp deployment ID.
 
-host := "www.google.com" // Google as our host
-tcp := network_interface.tcp_connect host 443
+/// Sends the given temperature $temp and pressure $pres to the Google server.
+send_to_spreadsheet temp pres:
+  network_interface := net.open
 
-socket := tls.Socket.client tcp
-  --server_name=host
-  --root_certificates=[GLOBALSIGN_ROOT]
+  host := "www.google.com" // Google as our host
+  tcp := network_interface.tcp_connect host 443
 
-connection := http.Connection socket host
+  socket := tls.Socket.client tcp
+    --server_name=host
+    --root_certificates=[GLOBALSIGN_ROOT]
+
+  connection := http.Connection socket host
+  parameters := "email=$EMAIL&thresh=$TEMP_THRESHOLD&id=Sheet1&Temperature=$temp&Pressure=$pres"  // HTTPS parameters.
+  request := connection.new_request "GET" "https://script.google.com/macros/s/$APP_ID/exec?$parameters"  // Create a HTTPS request.
+  request.send // Send the HTTPS request.
 
 main:
-  
   // Create an object for BMP280 sensor class
   bus := i2c.Bus
     --sda=gpio.Pin 21
     --scl=gpio.Pin 22
-  device := bus.device 0x76
+  device := bus.device drivers.Bmp280.I2C_ADDRESS
   bmp := drivers.Bmp280 device
 
-  // Turn on BMP280 sensor
+  // Turn on BMP280 sensor.
   bmp.on
 
-  // Store current temperature and pressure readings
   temp := bmp.read_temperature
   pres := bmp.read_pressure
 
-  // Debug
-  print "Temperature: $bmp.read_temperature C,  Pressure: $bmp.read_pressure Pa"
-
-  temp_threshold := 30 // Temperature threshold in degrees
-  email_id := "< Your e-mail ID >"  // email-id for sending alerts
-  app_id := "< Your Web app Deployment ID >"  // Webapp deployment ID
-
-  parameters := "email="+email_id+"&thresh="+temp_threshold.stringify+"&id=Sheet1&Temperature="+temp.stringify+"&Pressure="+pres.stringify  // HTTPS parameters
-
-  request := connection.new_request "GET" "https://script.google.com/macros/s/"+app_id+"/exec?"+parameters  // Create a HTTPS request
-  response := request.send // Send the HTTPS request
+  // Debug.
+  print "Temperature: $temp C,  Pressure: $pres Pa"
+  
+  // Store current temperature and pressure readings.
+  send_to_spreadsheet temp pres
 
 
 // To find trusted roots like this:
@@ -55,7 +56,7 @@ main:
 // trusted root certificate in Chrome at chrome://settings/certificates (the
 // Authorities tab) and export it to a text file.
 
-GLOBALSIGN_ROOT ::= net.Certificate.parse """\
+GLOBALSIGN_ROOT ::= net.Certificate.parse """
 -----BEGIN CERTIFICATE-----
 MIIFYjCCBEqgAwIBAgIQd70NbNs2+RrqIQ/E8FjTDTANBgkqhkiG9w0BAQsFADBX
 MQswCQYDVQQGEwJCRTEZMBcGA1UEChMQR2xvYmFsU2lnbiBudi1zYTEQMA4GA1UE
