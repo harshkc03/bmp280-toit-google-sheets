@@ -22,16 +22,13 @@ function doGet(e){
   var col = 0;
   var d = new Date();
 
-  for (i in headers){
+  for (i in headers) {
 
     // loop through the headers and if a parameter name matches the header name insert the value
 
-    if (headers[i] == "Timestamp")
-    {
+    if (headers[i] == "Timestamp") {
       val = d.toDateString() + ", " + d.toLocaleTimeString();
-    }
-    else
-    {
+    } else {
       val = e.parameter[headers[i]]; 
     }
 
@@ -47,8 +44,7 @@ function doGet(e){
   var pres = getByName("Pressure", lastRow)
   var threshold = e.parameter["thresh"]
   
-  if(temp > threshold) 
-  {
+  if(temp > threshold) {
     var to = e.parameter["email"]
     var message = "Stats recorded: \n\n";
     message += "Temperature: " + temp + " °C \n"; 
