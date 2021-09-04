@@ -7,7 +7,7 @@ import tls
 // Import libraries for BMP280 sensor
 import gpio
 import i2c
-import .bmp280 as drivers
+import bmp280 as drivers
 
 TEMP_THRESHOLD ::= 30 // Temperature threshold in degrees.
 EMAIL  ::= "< Your e-mail address >"  // Email address for sending alerts.
@@ -34,7 +34,7 @@ main:
   bus := i2c.Bus
     --sda=gpio.Pin 21
     --scl=gpio.Pin 22
-  device := bus.device drivers.Bmp280.I2C_ADDRESS
+  device := bus.device drivers.I2C_ADDRESS
   bmp := drivers.Bmp280 device
 
   // Turn on BMP280 sensor.
